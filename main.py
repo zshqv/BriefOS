@@ -3,6 +3,7 @@ BriefOS — one-click company research brief generator.
 
 Usage (run from project root C:\\Users\\tashu\\BriefOS\\):
     py -3.11 main.py --ticker JPM
+    py -3.11 main.py --ticker NVDA --debug
 """
 import argparse
 import logging
@@ -35,8 +36,10 @@ def main():
     log.info("BriefOS starting — ticker: %s", ticker)
     t0 = time.time()
 
-    # ── Step 1: Fetch financials ──────────────────────────────────────────
+    # ── Layer 1: Fetch ────────────────────────────────────────────────────
     from briefos.fetcher.financials import fetch as fetch_financials, FinancialFetchError
+    from briefos.fetcher.wikipedia  import fetch as fetch_wiki,       WikiFetchError
+
     try:
         financials = fetch_financials(ticker)
     except FinancialFetchError as exc:
@@ -44,27 +47,33 @@ def main():
         sys.exit(1)
 
     company_name = financials["meta"]["name"]
-    log.info("Resolved company: %s", company_name)
+    log.info("Resolved: %s", company_name)
 
-    # ── Step 2: Fetch Wikipedia ───────────────────────────────────────────
-    from briefos.fetcher.wikipedia import fetch as fetch_wiki, WikiFetchError
     try:
         wiki = fetch_wiki(company_name)
     except WikiFetchError as exc:
-        log.warning("Wikipedia fetch failed (continuing without it): %s", exc)
+        log.warning("Wikipedia unavailable (continuing without it): %s", exc)
         wiki = {"title": company_name, "summary": "", "categories": [], "url": ""}
 
-    # ── Steps 3–4: Process + Render (stubs — wired in next steps) ─────────
+    # ── Layer 2: Process ──────────────────────────────────────────────────
+    from briefos.processor.content import build
+    from briefos.processor.flags   import extract
+
+    sections = build(financials, wiki)
+    flags    = extract(financials)
+    log.info("Processor complete — %d flags raised", len(flags))
+
+    # ── Layer 3: Render ───────────────────────────────────────────────────
+    from briefos.renderer.pdf import render
+
+    output_path = render(sections, flags, ticker)
     elapsed = time.time() - t0
+
     log.info("─" * 55)
-    log.info("Fetcher layer complete in %.1fs", elapsed)
-    log.info("  Company    : %s", company_name)
-    log.info("  Sector     : %s", financials["meta"]["sector"])
-    log.info("  Market cap : %s", financials["valuation"]["market_cap"])
-    log.info("  Wikipedia  : %s", wiki["title"])
-    log.info("  Wiki URL   : %s", wiki["url"])
+    log.info("Brief generated in %.1fs", elapsed)
+    log.info("Output: %s", output_path)
     log.info("─" * 55)
-    log.info("Processor and renderer not yet wired — coming in Step 2.")
+    print(f"\nDone. PDF saved to:\n  {output_path}\n")
 
 
 if __name__ == "__main__":
