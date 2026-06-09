@@ -48,14 +48,34 @@ def _fmt_employees(n: Optional[int]) -> str:
 
 
 def _fiscal_year_label(financials: dict) -> str:
-    """Return a human-readable fiscal year label, e.g. 'FY2024'."""
+    """
+    Return the most recently completed fiscal year label, e.g. 'FY2025'.
+
+    Logic:
+      - fiscal_year_end from yfinance is the month number the FY ends (1-12).
+      - If that month has already passed this calendar year, the completed
+        FY carries the current calendar year label.
+      - If that month is still upcoming this calendar year, the most recently
+        completed FY ended last calendar year.
+      - Falls back to FY(current year - 1) if no fiscal_year_end is available.
+
+    Examples (assuming today is June 2026):
+      December FY (month 12) -> month 12 not yet passed -> FY2025
+      September FY (month 9)  -> month 9 not yet passed -> FY2025
+      March FY (month 3)      -> month 3 has passed     -> FY2026
+    """
     month = financials["meta"].get("fiscal_year_end")
-    if month:
-        # fiscal_year_end is month number (1-12); derive fiscal year from today
-        today = datetime.now()
-        fy = today.year if today.month > month else today.year - 1
-        return f"FY{fy}"
-    return f"FY{datetime.now().year - 1}"
+    today = datetime.now()
+
+    if not month:
+        return f"FY{today.year - 1}"
+
+    # If the fiscal year end month has already passed this calendar year,
+    # the most recently completed fiscal year carries this calendar year's label
+    if today.month > month:
+        return f"FY{today.year}"
+    else:
+        return f"FY{today.year - 1}"
 
 
 def build(financials: dict, wiki: dict) -> dict:
