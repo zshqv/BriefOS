@@ -90,10 +90,12 @@ print(data["valuation"]["market_cap"])
 
 BriefOS is the first module in a planned research toolkit:
 
-| Tool | Status | Purpose |
-|---|---|---|
-| **BriefOS** | Live | One-click company research brief (PDF) |
-| **PitchOS** | Planned | Investment pitch deck generator — reuses `briefos.fetcher.financials` |
+| Tool            | Status  | Purpose                                                               |
+| --------------- | ------- | --------------------------------------------------------------------- |
+| **[Trikosh](https://trikosh.io)**     | Live    | Open-source financial research platform — 120 companies, 6 sectors   |
+| **[RedFlag](https://github.com/zshqv/RedFlag)**     | Live    | Automated SEC EDGAR risk analyser — scans 10-K/20-F filings in 60s   |
+| **BriefOS**     | Live    | One-click company research brief (PDF) — single ticker or peer compare|
+| **PitchOS**     | Planned | M&A one-pager generator — reuses `briefos.fetcher.financials`         |
 
 ---
 
