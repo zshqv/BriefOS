@@ -140,26 +140,57 @@ def _flags_block(pdf: BriefPDF, flags: list):
     """Render flag chips with coloured severity indicators."""
     if not flags:
         return
+
+    avail = 210 - 2 * PDF_MARGIN_MM
+    row_h = 6.5
+    col_icon  = avail * 0.22
+    col_label = avail * 0.30
+    col_detail = avail * 0.48
+
     for sev, label, detail in flags:
         colour = SEV_COLOUR.get(sev, MED)
-        icon   = SEV_ICON.get(sev, "•")
-        avail  = 210 - 2 * PDF_MARGIN_MM
+        icon   = SEV_ICON.get(sev, "*")
 
-        # Chip row
+        # Measure how many lines the detail text will need
+        # so we can set the correct total row height before drawing
+        pdf.set_font("Helvetica", "", 7.5)
+        detail_clean = _t(detail)
+        char_width   = pdf.get_string_width("x")
+        chars_per_line = max(1, int(col_detail / (char_width * 0.72)))
+        wrapped_lines  = max(1, -(-len(detail_clean) // chars_per_line))  # ceiling division
+        total_h = max(row_h, wrapped_lines * row_h * 0.85)
+
+        # Snapshot Y before drawing so all three columns start at same Y
+        y = pdf.get_y()
+
+        # Check if this row will overflow the page before drawing
+        if y + total_h > pdf.h - pdf.b_margin:
+            pdf.add_page()
+            y = pdf.get_y()
+
+        # Column 1 — severity chip (filled colour block)
+        pdf.set_xy(PDF_MARGIN_MM, y)
         pdf.set_fill_color(*colour)
         pdf.set_text_color(*WHITE)
         pdf.set_font("Helvetica", "B", 8)
-        pdf.set_x(PDF_MARGIN_MM)
-        pdf.cell(avail * 0.22, 6, _t(f"  {icon}  {sev.upper()}"), fill=True, border=0)
+        pdf.cell(col_icon, row_h, _t(f"  {icon}  {sev.upper()}"), fill=True, border=0)
 
+        # Column 2 — flag label
+        pdf.set_xy(PDF_MARGIN_MM + col_icon, y)
         pdf.set_text_color(*DARK)
         pdf.set_font("Helvetica", "B", 8)
-        pdf.cell(avail * 0.30, 6, _t(f" {label}"))
+        pdf.cell(col_label, row_h, _t(f" {label}"), border=0)
 
+        # Column 3 — detail text (may wrap, but Y is anchored above)
+        pdf.set_xy(PDF_MARGIN_MM + col_icon + col_label, y)
         pdf.set_font("Helvetica", "", 7.5)
         pdf.set_text_color(*MED)
-        pdf.multi_cell(avail * 0.48, 6, _t(detail), align="L")
-        pdf.ln(1)
+        pdf.multi_cell(col_detail, row_h * 0.85, detail_clean, align="L")
+
+        # Advance Y to the correct next position regardless of wrap
+        next_y = max(pdf.get_y(), y + row_h)
+        pdf.set_y(next_y + 1)
+
     pdf.ln(2)
 
 
