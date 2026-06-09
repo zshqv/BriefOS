@@ -82,6 +82,9 @@ def build(financials: dict, wiki: dict) -> dict:
     i  = financials["income"]
     b  = financials["balance"]
     cf = financials["cashflow"]
+    gross_profit = i.get("gross_profit_annual")
+    revenue      = i.get("revenue_annual")
+    gross_margin = (gross_profit / revenue) if (gross_profit and revenue and revenue != 0) else None
     mk = financials["market"]
     dv = financials["dividends"]
 
@@ -132,11 +135,11 @@ def build(financials: dict, wiki: dict) -> dict:
             "EPS (forward)":     _fmt_price(v.get("eps_forward")),
         },
         "profitability": {
-            "Gross Margin":      _fmt_pct(p.get("profit_margin")),
-            "Operating Margin":  _fmt_pct(p.get("operating_margin")),
-            "Net Margin":        _fmt_pct(p.get("profit_margin")),
-            "ROE":               _fmt_pct(p.get("roe")),
-            "ROA":               _fmt_pct(p.get("roa")),
+            "Gross Margin":     _fmt_pct(gross_margin),
+            "Operating Margin": _fmt_pct(p.get("operating_margin")),
+            "Net Margin":       _fmt_pct(p.get("profit_margin")),
+            "ROE":              _fmt_pct(p.get("roe")),
+            "ROA":              _fmt_pct(p.get("roa")),
         },
         "income": {
             f"Revenue ({fy})":          _fmt_large(i.get("revenue_annual")),
