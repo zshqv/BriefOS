@@ -92,15 +92,16 @@ def build(financials: dict, wiki: dict) -> dict:
     wiki_summary = (wiki.get("summary") or "").strip()
 
     # Prefer the yfinance long description; fall back to Wikipedia
+    wiki_addendum = ""
+
     if len(description) < 200 and wiki_summary:
         combined_overview = wiki_summary
     elif wiki_summary and len(wiki_summary) > 100:
         # Show yfinance first, Wikipedia as additional context
         combined_overview = description
-        wiki_addendum = wiki_summary
+        wiki_addendum     = wiki_summary
     else:
         combined_overview = description
-        wiki_addendum = ""
 
     return {
         "header": {
@@ -114,8 +115,8 @@ def build(financials: dict, wiki: dict) -> dict:
             ],
         },
         "overview": {
-            "text":        combined_overview,
-            "wiki_extra":  locals().get("wiki_addendum", ""),
+            "text":       combined_overview,
+            "wiki_extra": wiki_addendum,
         },
         "identity": {
             "Sector":       m.get("sector")    or "N/A",
