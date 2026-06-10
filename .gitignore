@@ -10,3 +10,4 @@ build/
 .venv
 venv/
 briefos/output/*.pdf
+briefos/output/*.html
