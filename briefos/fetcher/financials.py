@@ -133,6 +133,7 @@ def fetch(ticker_symbol: str) -> dict:
     cf      = _cashflow(ticker)
 
     return {
+        "_ticker": ticker,   # yf.Ticker object — for callers that need DataFrames
         "ticker": symbol,
         "meta": {
             "name":         company_name,
