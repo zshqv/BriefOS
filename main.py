@@ -34,11 +34,13 @@ def parse_args():
 
 def run_single(ticker: str):
     """Fetch, process, and render a single-ticker brief."""
-    from briefos.fetcher.financials import fetch as fetch_financials, FinancialFetchError
-    from briefos.fetcher.wikipedia  import fetch as fetch_wiki,       WikiFetchError
-    from briefos.processor.content  import build
+    from briefos.fetcher.financials  import fetch as fetch_financials, FinancialFetchError
+    from briefos.fetcher.wikipedia   import fetch as fetch_wiki,        WikiFetchError
+    from briefos.fetcher.news        import fetch as fetch_news
+    from briefos.processor.content  import build, compute_derived_metrics
     from briefos.processor.flags    import extract
-    from briefos.renderer.pdf       import render
+    from briefos.charts.generator   import generate_charts
+    from briefos.renderer.html      import render_brief
 
     try:
         financials = fetch_financials(ticker)
@@ -46,6 +48,7 @@ def run_single(ticker: str):
         log.error("Financial fetch failed: %s", exc)
         sys.exit(1)
 
+    ticker_obj   = financials["_ticker"]
     company_name = financials["meta"]["name"]
     log.info("Resolved: %s", company_name)
 
@@ -55,19 +58,26 @@ def run_single(ticker: str):
         log.warning("Wikipedia unavailable (continuing without it): %s", exc)
         wiki = {"title": company_name, "summary": "", "categories": [], "url": ""}
 
+    news   = fetch_news(ticker_obj)
+    log.info("News fetched -- %d headlines", len(news))
+
+    charts = generate_charts(financials, ticker_obj)
+    log.info("Charts generated")
+
     sections = build(financials, wiki)
     flags    = extract(financials)
+    derived  = compute_derived_metrics(financials)
     log.info("Processor complete -- %d flags raised", len(flags))
 
-    output_path = render(sections, flags, ticker)
+    output_path = render_brief(sections, financials, flags, derived, charts, news)
     return output_path
 
 
 def run_compare(tickers: list[str]):
-    """Fetch all tickers and render a single comparison PDF."""
-    from briefos.fetcher.financials  import fetch as fetch_financials, FinancialFetchError
-    from briefos.processor.compare   import build_comparison
-    from briefos.renderer.compare_pdf import render_comparison
+    """Fetch all tickers and render a single comparison HTML brief."""
+    from briefos.fetcher.financials   import fetch as fetch_financials, FinancialFetchError
+    from briefos.processor.compare    import build_comparison
+    from briefos.renderer.compare_html import render_comparison
 
     if len(tickers) < 2:
         log.error("--compare requires at least 2 tickers.")
@@ -89,7 +99,7 @@ def run_compare(tickers: list[str]):
             sys.exit(1)
 
     comparison  = build_comparison(all_financials)
-    output_path = render_comparison(comparison)
+    output_path = render_comparison(comparison, all_financials)
     return output_path
 
 
@@ -114,7 +124,7 @@ def main():
     log.info("Brief generated in %.1fs", elapsed)
     log.info("Output: %s", output_path)
     log.info("-" * 55)
-    print(f"\nDone. PDF saved to:\n  {output_path}\n")
+    print(f"\nDone. Brief saved to:\n  {output_path}\n")
 
 
 if __name__ == "__main__":
