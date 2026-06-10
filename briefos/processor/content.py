@@ -47,6 +47,58 @@ def _fmt_employees(n: Optional[int]) -> str:
     return f"{n:,}"
 
 
+def _fmt_analyst_rating(rating: Optional[str]) -> str:
+    """Format 'strong_buy' → 'Strong Buy'; return 'N/A' if missing."""
+    if not rating:
+        return "N/A"
+    return rating.replace("_", " ").title()
+
+
+def _fmt_div_yield(v: Optional[float]) -> str:
+    """Format dividend yield; values above 20% are flagged as data anomalies.
+
+    yfinance returns yield as a decimal (0.025 = 2.5%). Anything above 0.20
+    is almost certainly a stale or mis-scaled data point from the API.
+    """
+    if v is None:
+        return "N/A"
+    if v > 0.20:
+        return "N/A (data anomaly)"
+    return _fmt_pct(v)
+
+
+_WIKI_TAG_NOISE = (
+    "cs1", "maint:", "articles with", "all articles",
+    "wikipedia", "wikidata", "commons category",
+)
+
+
+def _filter_categories(cats: list) -> list:
+    """Remove Wikipedia maintenance / meta tags; keep genuine business descriptors."""
+    return [
+        c for c in cats
+        if not any(noise in c.lower() for noise in _WIKI_TAG_NOISE)
+    ]
+
+
+def _first_paragraph(text: str, max_chars: int = 600) -> str:
+    """Return the first double-newline paragraph, capped at max_chars.
+
+    If the paragraph exceeds max_chars, it is truncated at the last sentence
+    boundary ('. ', '! ', '? ') before that limit and an ellipsis is appended.
+    """
+    if not text:
+        return text
+    para = text.split("\n\n")[0].strip()
+    if len(para) <= max_chars:
+        return para
+    truncated = para[:max_chars]
+    last_end = max(truncated.rfind(". "), truncated.rfind("! "), truncated.rfind("? "))
+    if last_end > 0:
+        return truncated[:last_end + 1] + "..."
+    return truncated.rstrip() + "..."
+
+
 def _safe_div(numerator, denominator):
     """Return numerator / denominator, or None if either is None or denominator is zero."""
     if numerator is None or denominator is None or denominator == 0:
@@ -130,6 +182,10 @@ def build(financials: dict, wiki: dict) -> dict:
     else:
         combined_overview = description
 
+    combined_overview = _first_paragraph(combined_overview)
+    if wiki_addendum:
+        wiki_addendum = _first_paragraph(wiki_addendum)
+
     return {
         "header": {
             "ticker":      financials["ticker"],
@@ -193,14 +249,14 @@ def build(financials: dict, wiki: dict) -> dict:
             "52-Week High":     _fmt_price(mk.get("week52_high")),
             "52-Week Low":      _fmt_price(mk.get("week52_low")),
             "Beta":             f"{mk['beta']:.2f}" if mk.get("beta") else "N/A",
-            "Analyst Rating":   (mk.get("analyst_rating") or "N/A").upper(),
+            "Analyst Rating":   _fmt_analyst_rating(mk.get("analyst_rating")),
             "Analyst Count":    str(mk.get("analyst_count") or "N/A"),
         },
         "dividends": {
-            "Dividend Yield":  _fmt_pct(dv.get("yield")),
+            "Dividend Yield":  _fmt_div_yield(dv.get("yield")),
             "Payout Ratio":    _fmt_pct(dv.get("payout_ratio")),
         },
-        "categories": wiki.get("categories", [])[:12],
+        "categories": _filter_categories(wiki.get("categories", []))[:12],
     }
 
 
