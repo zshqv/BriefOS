@@ -1,0 +1,646 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>{{ header.name }} ({{ header.ticker }}) — BriefOS Research Brief</title>
+<style>
+  /* ── Reset & base ──────────────────────────────────────────────────────── */
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: "Segoe UI", Arial, Helvetica, sans-serif;
+    font-size: 13px;
+    color: #1B2A4A;
+    background: #ffffff;
+    line-height: 1.55;
+  }
+
+  /* ── Page wrapper ──────────────────────────────────────────────────────── */
+  .page {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 0 40px 60px;
+  }
+
+  /* ── Header bar ────────────────────────────────────────────────────────── */
+  .doc-header {
+    background: #1B2A4A;
+    color: #ffffff;
+    padding: 18px 40px;
+    margin: 0 -40px 32px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .doc-header .company-block .company-name {
+    font-size: 20px;
+    font-weight: 700;
+    letter-spacing: 0.01em;
+  }
+  .doc-header .company-block .company-sub {
+    font-size: 11px;
+    color: #94A3B8;
+    margin-top: 3px;
+  }
+  .doc-header .meta-block {
+    text-align: right;
+    font-size: 11px;
+    color: #94A3B8;
+    line-height: 1.7;
+  }
+  .doc-header .meta-block .branding {
+    font-weight: 700;
+    font-size: 12px;
+    color: #ffffff;
+    letter-spacing: 0.08em;
+  }
+
+  /* ── Section headings ──────────────────────────────────────────────────── */
+  .section-heading {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.10em;
+    text-transform: uppercase;
+    color: #1B2A4A;
+    border-bottom: 2px solid #1B2A4A;
+    padding-bottom: 5px;
+    margin: 28px 0 14px;
+  }
+
+  /* ── Executive Takeaway box ────────────────────────────────────────────── */
+  .takeaway-box {
+    background: #EFF4FB;
+    border-left: 4px solid #1B2A4A;
+    border-radius: 0 6px 6px 0;
+    padding: 14px 18px;
+    margin-bottom: 4px;
+    font-size: 13.5px;
+    color: #1B2A4A;
+    line-height: 1.6;
+  }
+
+  /* ── 2-column snapshot grid ────────────────────────────────────────────── */
+  .snapshot-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0;
+    border: 1px solid #E2E8F0;
+    border-radius: 6px;
+    overflow: hidden;
+  }
+  .snapshot-cell {
+    padding: 10px 14px;
+    border-bottom: 1px solid #E2E8F0;
+  }
+  .snapshot-cell:nth-child(odd)  { border-right: 1px solid #E2E8F0; background: #F8FAFC; }
+  .snapshot-cell:nth-child(even) { background: #ffffff; }
+  .snapshot-cell:nth-last-child(-n+2) { border-bottom: none; }
+  .snap-label { font-size: 10px; color: #64748B; text-transform: uppercase; letter-spacing: 0.06em; }
+  .snap-value { font-size: 13px; font-weight: 600; color: #1B2A4A; margin-top: 2px; }
+  .snap-value a { color: #1B2A4A; }
+
+  /* ── Flag pills ────────────────────────────────────────────────────────── */
+  .flags-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-bottom: 4px;
+  }
+  .flag-pill {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    border-radius: 6px;
+    padding: 10px 14px;
+    flex: 1 1 calc(50% - 10px);
+    min-width: 200px;
+    border: 1px solid transparent;
+  }
+  .flag-pill.positive { background: #F0FDF4; border-color: #BBF7D0; }
+  .flag-pill.caution  { background: #FFFBEB; border-color: #FDE68A; }
+  .flag-pill.alert    { background: #FEF2F2; border-color: #FECACA; }
+  .flag-badge {
+    display: inline-block;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    padding: 2px 7px;
+    border-radius: 3px;
+    white-space: nowrap;
+    flex-shrink: 0;
+    margin-top: 1px;
+  }
+  .flag-pill.positive .flag-badge { background: #15803D; color: #ffffff; }
+  .flag-pill.caution  .flag-badge { background: #D97706; color: #ffffff; }
+  .flag-pill.alert    .flag-badge { background: #DC2626; color: #ffffff; }
+  .flag-body .flag-label  { font-size: 12px; font-weight: 600; color: #1B2A4A; }
+  .flag-body .flag-detail { font-size: 11px; color: #475569; margin-top: 2px; }
+
+  /* ── Data tables ────────────────────────────────────────────────────────── */
+  .data-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 12.5px;
+  }
+  .data-table tbody tr:nth-child(odd)  td { background: #F8FAFC; }
+  .data-table tbody tr:nth-child(even) td { background: #ffffff; }
+  .data-table td {
+    padding: 7px 10px;
+    border-bottom: 1px solid #E2E8F0;
+    vertical-align: middle;
+  }
+  .data-table td.label {
+    color: #475569;
+    font-size: 11px;
+    font-weight: 500;
+    width: 42%;
+  }
+  .data-table td.value {
+    color: #1B2A4A;
+    font-weight: 600;
+    text-align: right;
+  }
+  /* Two-column table pair */
+  .data-table td.label2 {
+    color: #475569;
+    font-size: 11px;
+    font-weight: 500;
+    width: 26%;
+    padding-left: 24px;
+  }
+  .data-table td.value2 {
+    color: #1B2A4A;
+    font-weight: 600;
+    text-align: right;
+    width: 24%;
+  }
+
+  /* ── Derived metrics table ───────────────────────────────────────────────── */
+  .derived-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 12.5px;
+  }
+  .derived-table td {
+    padding: 7px 10px;
+    border-bottom: 1px solid #E2E8F0;
+    vertical-align: middle;
+  }
+  .derived-table tr:nth-child(odd)  td { background: #F8FAFC; }
+  .derived-table tr:nth-child(even) td { background: #ffffff; }
+  .derived-table td.d-label { color: #475569; font-size: 11px; font-weight: 500; width: 35%; }
+  .derived-table td.d-value { color: #1B2A4A; font-weight: 600; text-align: right; width: 25%; }
+  .derived-table td.d-note  { color: #64748B; font-size: 11px; text-align: right; width: 40%; }
+  .qoe-strong { color: #15803D; font-weight: 700; }
+  .qoe-weak   { color: #DC2626; font-weight: 700; }
+
+  /* ── Charts ─────────────────────────────────────────────────────────────── */
+  .charts-row {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+    margin-bottom: 4px;
+  }
+  .chart-card {
+    border: 1px solid #E2E8F0;
+    border-radius: 8px;
+    overflow: hidden;
+    background: #F8FAFC;
+  }
+  .chart-card img {
+    width: 100%;
+    height: auto;
+    display: block;
+    border-radius: 8px 8px 0 0;
+  }
+  .chart-caption {
+    font-size: 10px;
+    color: #64748B;
+    text-align: center;
+    padding: 6px 8px;
+    background: #ffffff;
+    border-top: 1px solid #E2E8F0;
+  }
+
+  /* ── News ────────────────────────────────────────────────────────────────── */
+  .news-item {
+    padding: 9px 0;
+    border-bottom: 1px solid #E2E8F0;
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+  }
+  .news-item:last-child { border-bottom: none; }
+  .news-date {
+    font-size: 10px;
+    color: #94A3B8;
+    white-space: nowrap;
+    flex-shrink: 0;
+    min-width: 80px;
+  }
+  .news-body { flex: 1; }
+  .news-title a {
+    font-size: 12.5px;
+    font-weight: 600;
+    color: #1B2A4A;
+    text-decoration: none;
+  }
+  .news-title a:hover { text-decoration: underline; color: #2563EB; }
+  .news-pub {
+    font-size: 10px;
+    color: #64748B;
+    margin-top: 2px;
+  }
+
+  /* ── Sources & Footer ──────────────────────────────────────────────────── */
+  .sources-block {
+    margin-top: 28px;
+    padding: 14px 16px;
+    background: #F8FAFC;
+    border: 1px solid #E2E8F0;
+    border-radius: 6px;
+    font-size: 11px;
+    color: #64748B;
+    line-height: 1.7;
+  }
+  .sources-block strong { color: #475569; }
+  .doc-footer {
+    margin-top: 24px;
+    padding-top: 12px;
+    border-top: 1px solid #E2E8F0;
+    font-size: 10px;
+    color: #94A3B8;
+    text-align: center;
+    letter-spacing: 0.04em;
+  }
+
+  /* ── Overview text ─────────────────────────────────────────────────────── */
+  .overview-text {
+    font-size: 12.5px;
+    color: #334155;
+    line-height: 1.65;
+    margin-bottom: 6px;
+  }
+  .wiki-extra {
+    margin-top: 10px;
+    padding-top: 10px;
+    border-top: 1px dashed #CBD5E1;
+    font-size: 12px;
+    color: #64748B;
+    line-height: 1.65;
+  }
+
+  /* ── Categories ────────────────────────────────────────────────────────── */
+  .category-pills {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 4px;
+  }
+  .category-pill {
+    font-size: 10px;
+    color: #475569;
+    background: #F1F5F9;
+    border: 1px solid #CBD5E1;
+    border-radius: 3px;
+    padding: 2px 8px;
+  }
+
+  /* ── Print ─────────────────────────────────────────────────────────────── */
+  @media print {
+    body { font-size: 11px; }
+    .page { padding: 0 20px 30px; max-width: 100%; }
+    .doc-header { margin: 0 -20px 20px; padding: 12px 20px; }
+    .charts-row { grid-template-columns: repeat(3, 1fr); }
+    .flag-pill { flex: 1 1 calc(50% - 6px); }
+    a { color: inherit; text-decoration: none; }
+  }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <!-- ── 1. Header bar ─────────────────────────────────────────────────── -->
+  <div class="doc-header">
+    <div class="company-block">
+      <div class="company-name">{{ header.name }}</div>
+      <div class="company-sub">
+        {{ header.ticker }}
+        {% if identity.get('Sector') and identity.Sector != 'N/A' %} &nbsp;·&nbsp; {{ identity.Sector }}{% endif %}
+        {% if identity.get('Country') and identity.Country != 'N/A' %} &nbsp;·&nbsp; {{ identity.Country }}{% endif %}
+      </div>
+    </div>
+    <div class="meta-block">
+      <div class="branding">BRIEFOS</div>
+      <div>{{ header.fiscal_year }} &nbsp;·&nbsp; {{ header.timestamp }}</div>
+      <div>RESEARCH BRIEF</div>
+    </div>
+  </div>
+
+  <!-- ── 2. Executive Takeaway ─────────────────────────────────────────── -->
+  {% if derived and derived.executive_takeaway %}
+  <div class="section-heading">Executive Takeaway</div>
+  <div class="takeaway-box">{{ derived.executive_takeaway }}</div>
+  {% endif %}
+
+  <!-- ── 3. Company Snapshot ───────────────────────────────────────────── -->
+  <div class="section-heading">Company Snapshot</div>
+  <div class="snapshot-grid">
+    {% for label, value in identity.items() %}
+    <div class="snapshot-cell">
+      <div class="snap-label">{{ label }}</div>
+      <div class="snap-value">
+        {% if label == 'Website' and value != 'N/A' %}
+          <a href="{{ value }}" target="_blank" rel="noopener">{{ value }}</a>
+        {% else %}
+          {{ value }}
+        {% endif %}
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+
+  <!-- ── 4. Key Flags ──────────────────────────────────────────────────── -->
+  {% if flags %}
+  <div class="section-heading">Key Flags</div>
+  <div class="flags-row">
+    {% for sev, label, detail in flags[:4] %}
+    <div class="flag-pill {{ sev }}">
+      <div class="flag-badge">{{ sev }}</div>
+      <div class="flag-body">
+        <div class="flag-label">{{ label }}</div>
+        <div class="flag-detail">{{ detail }}</div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  <!-- ── 5. Valuation Summary ──────────────────────────────────────────── -->
+  <div class="section-heading">Valuation</div>
+  <table class="data-table">
+    <tbody>
+    {% set val_items = valuation.items() | list %}
+    {% for i in range(0, val_items | length, 2) %}
+    <tr>
+      <td class="label">{{ val_items[i][0] }}</td>
+      <td class="value">{{ val_items[i][1] }}</td>
+      {% if i + 1 < val_items | length %}
+      <td class="label2">{{ val_items[i+1][0] }}</td>
+      <td class="value2">{{ val_items[i+1][1] }}</td>
+      {% else %}
+      <td class="label2"></td><td class="value2"></td>
+      {% endif %}
+    </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+
+  <!-- ── 6. Financial Highlights ───────────────────────────────────────── -->
+  <div class="section-heading">Financial Highlights</div>
+  <table class="data-table">
+    <tbody>
+    {% set inc_items = income.items() | list %}
+    {% for i in range(0, inc_items | length, 2) %}
+    <tr>
+      <td class="label">{{ inc_items[i][0] }}</td>
+      <td class="value">{{ inc_items[i][1] }}</td>
+      {% if i + 1 < inc_items | length %}
+      <td class="label2">{{ inc_items[i+1][0] }}</td>
+      <td class="value2">{{ inc_items[i+1][1] }}</td>
+      {% else %}
+      <td class="label2"></td><td class="value2"></td>
+      {% endif %}
+    </tr>
+    {% endfor %}
+    {% set prof_items = profitability.items() | list %}
+    {% for i in range(0, prof_items | length, 2) %}
+    <tr>
+      <td class="label">{{ prof_items[i][0] }}</td>
+      <td class="value">{{ prof_items[i][1] }}</td>
+      {% if i + 1 < prof_items | length %}
+      <td class="label2">{{ prof_items[i+1][0] }}</td>
+      <td class="value2">{{ prof_items[i+1][1] }}</td>
+      {% else %}
+      <td class="label2"></td><td class="value2"></td>
+      {% endif %}
+    </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+
+  <!-- ── 7. Derived Metrics ─────────────────────────────────────────────── -->
+  {% if derived %}
+  <div class="section-heading">Derived Metrics</div>
+  <table class="derived-table">
+    <tbody>
+    {% if derived.quality_of_earnings and derived.quality_of_earnings.ratio is not none %}
+    <tr>
+      <td class="d-label">Quality of Earnings</td>
+      <td class="d-value">{{ derived.quality_of_earnings.ratio }}x</td>
+      <td class="d-note">
+        OCF / Net Income &nbsp;—&nbsp;
+        {% if derived.quality_of_earnings.flag == 'Strong' %}
+          <span class="qoe-strong">Strong (&ge;0.8)</span>
+        {% elif derived.quality_of_earnings.flag == 'Weak' %}
+          <span class="qoe-weak">Weak (&lt;0.8)</span>
+        {% endif %}
+      </td>
+    </tr>
+    {% endif %}
+    {% if derived.net_cash_position %}
+    <tr>
+      <td class="d-label">Net Cash Position</td>
+      <td class="d-value" colspan="2">{{ derived.net_cash_position }}</td>
+    </tr>
+    {% endif %}
+    {% if derived.fcf_yield_pct is not none %}
+    <tr>
+      <td class="d-label">FCF Yield</td>
+      <td class="d-value">{{ derived.fcf_yield_pct }}%</td>
+      <td class="d-note">Free Cash Flow / Market Cap</td>
+    </tr>
+    {% endif %}
+    {% if derived.capex_intensity is not none %}
+    <tr>
+      <td class="d-label">CapEx Intensity</td>
+      <td class="d-value">{{ derived.capex_intensity }}%</td>
+      <td class="d-note">abs(CapEx) / Revenue</td>
+    </tr>
+    {% endif %}
+    {% if derived.margin_spread is not none %}
+    <tr>
+      <td class="d-label">Margin Spread (SG&amp;A Drag)</td>
+      <td class="d-value">{{ derived.margin_spread }} pp</td>
+      <td class="d-note">Gross Margin % − Operating Margin %</td>
+    </tr>
+    {% endif %}
+    </tbody>
+  </table>
+  {% endif %}
+
+  <!-- ── 8. Charts ─────────────────────────────────────────────────────── -->
+  {% if charts and (charts.revenue_trend or charts.net_income_trend or charts.margin_evolution) %}
+  <div class="section-heading">Financial Trends</div>
+  <div class="charts-row">
+    {% if charts.revenue_trend %}
+    <div class="chart-card">
+      <img src="data:image/png;base64,{{ charts.revenue_trend }}" alt="Revenue Trend">
+      <div class="chart-caption">Annual Revenue</div>
+    </div>
+    {% endif %}
+    {% if charts.net_income_trend %}
+    <div class="chart-card">
+      <img src="data:image/png;base64,{{ charts.net_income_trend }}" alt="Net Income Trend">
+      <div class="chart-caption">Annual Net Income</div>
+    </div>
+    {% endif %}
+    {% if charts.margin_evolution %}
+    <div class="chart-card">
+      <img src="data:image/png;base64,{{ charts.margin_evolution }}" alt="Margin Evolution">
+      <div class="chart-caption">Margin Evolution</div>
+    </div>
+    {% endif %}
+  </div>
+  {% endif %}
+
+  <!-- ── 9. News Intelligence ──────────────────────────────────────────── -->
+  {% if news %}
+  <div class="section-heading">News Intelligence</div>
+  {% for item in news %}
+  <div class="news-item">
+    <div class="news-date">{{ item.published_date or '—' }}</div>
+    <div class="news-body">
+      <div class="news-title">
+        {% if item.link %}
+          <a href="{{ item.link }}" target="_blank" rel="noopener">{{ item.title or 'Untitled' }}</a>
+        {% else %}
+          {{ item.title or 'Untitled' }}
+        {% endif %}
+      </div>
+      {% if item.publisher %}
+      <div class="news-pub">{{ item.publisher }}</div>
+      {% endif %}
+    </div>
+  </div>
+  {% endfor %}
+  {% endif %}
+
+  <!-- ── 10. Balance Sheet ─────────────────────────────────────────────── -->
+  <div class="section-heading">Balance Sheet</div>
+  <table class="data-table">
+    <tbody>
+    {% set bal_items = balance.items() | list %}
+    {% for i in range(0, bal_items | length, 2) %}
+    <tr>
+      <td class="label">{{ bal_items[i][0] }}</td>
+      <td class="value">{{ bal_items[i][1] }}</td>
+      {% if i + 1 < bal_items | length %}
+      <td class="label2">{{ bal_items[i+1][0] }}</td>
+      <td class="value2">{{ bal_items[i+1][1] }}</td>
+      {% else %}
+      <td class="label2"></td><td class="value2"></td>
+      {% endif %}
+    </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+
+  <!-- ── 11. Cash Flow ─────────────────────────────────────────────────── -->
+  <div class="section-heading">Cash Flow</div>
+  <table class="data-table">
+    <tbody>
+    {% set cf_items = cashflow.items() | list %}
+    {% for i in range(0, cf_items | length, 2) %}
+    <tr>
+      <td class="label">{{ cf_items[i][0] }}</td>
+      <td class="value">{{ cf_items[i][1] }}</td>
+      {% if i + 1 < cf_items | length %}
+      <td class="label2">{{ cf_items[i+1][0] }}</td>
+      <td class="value2">{{ cf_items[i+1][1] }}</td>
+      {% else %}
+      <td class="label2"></td><td class="value2"></td>
+      {% endif %}
+    </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+
+  <!-- ── Market Data ───────────────────────────────────────────────────── -->
+  <div class="section-heading">Market Data</div>
+  <table class="data-table">
+    <tbody>
+    {% set mkt_items = market.items() | list %}
+    {% for i in range(0, mkt_items | length, 2) %}
+    <tr>
+      <td class="label">{{ mkt_items[i][0] }}</td>
+      <td class="value">{{ mkt_items[i][1] }}</td>
+      {% if i + 1 < mkt_items | length %}
+      <td class="label2">{{ mkt_items[i+1][0] }}</td>
+      <td class="value2">{{ mkt_items[i+1][1] }}</td>
+      {% else %}
+      <td class="label2"></td><td class="value2"></td>
+      {% endif %}
+    </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+
+  <!-- ── Dividends ────────────────────────────────────────────────────── -->
+  {% if dividends %}
+  <div class="section-heading">Dividends</div>
+  <table class="data-table">
+    <tbody>
+    {% set div_items = dividends.items() | list %}
+    {% for i in range(0, div_items | length, 2) %}
+    <tr>
+      <td class="label">{{ div_items[i][0] }}</td>
+      <td class="value">{{ div_items[i][1] }}</td>
+      {% if i + 1 < div_items | length %}
+      <td class="label2">{{ div_items[i+1][0] }}</td>
+      <td class="value2">{{ div_items[i+1][1] }}</td>
+      {% else %}
+      <td class="label2"></td><td class="value2"></td>
+      {% endif %}
+    </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  {% endif %}
+
+  <!-- ── Business Overview ─────────────────────────────────────────────── -->
+  {% if overview and overview.text %}
+  <div class="section-heading">Business Overview</div>
+  <div class="overview-text">{{ overview.text }}</div>
+  {% if overview.wiki_extra %}
+  <div class="wiki-extra">{{ overview.wiki_extra }}</div>
+  {% endif %}
+  {% endif %}
+
+  <!-- ── Categories ────────────────────────────────────────────────────── -->
+  {% if categories %}
+  <div class="section-heading">Tags</div>
+  <div class="category-pills">
+    {% for cat in categories %}
+    <span class="category-pill">{{ cat }}</span>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  <!-- ── 12. Sources & Disclaimer ──────────────────────────────────────── -->
+  <div class="sources-block">
+    <strong>Sources:</strong>
+    {% for src in header.sources %}{{ src }}{% if not loop.last %} &nbsp;·&nbsp; {% endif %}{% endfor %}<br>
+    <strong>Generated by BriefOS on {{ header.timestamp }}.</strong>
+    Data is indicative only — always verify against primary regulatory filings.
+  </div>
+
+  <!-- ── 13. Footer ────────────────────────────────────────────────────── -->
+  <div class="doc-footer">
+    BriefOS v2.0 &nbsp;|&nbsp; github.com/zshqv/BriefOS
+  </div>
+
+</div><!-- .page -->
+</body>
+</html>
