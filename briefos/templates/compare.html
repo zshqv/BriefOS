@@ -198,7 +198,7 @@
   <div class="doc-header">
     <div class="title-block">
       <div class="doc-title">Peer Comparison</div>
-      <div class="doc-sub">{{ tickers | join(' &nbsp;vs&nbsp; ') }}</div>
+      <div class="doc-sub">{{ tickers | join(' vs ') }}</div>
     </div>
     <div class="meta-block">
       <div class="branding">BRIEFOS</div>
@@ -232,7 +232,7 @@
         <td class="label">{{ row.label }}</td>
         {% for i in range(tickers | length) %}
         <td class="val{% if best_indices and row.label in best_indices and best_indices[row.label] == i %} best{% endif %}">
-          {{ row.values[i] }}
+          {{ row['values'][i] }}
         </td>
         {% endfor %}
       </tr>
