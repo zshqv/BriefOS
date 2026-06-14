@@ -116,3 +116,7 @@ BriefOS is the first module in a planned research toolkit:
 - Wikipedia article quality varies by company.
 - Some metrics (e.g., P/S, dividends) return N/A for financials, banks,
   and non-dividend payers — this is expected.
+
+## Output Preview
+
+![BriefOS Output Preview](docs/briefos_preview.png)
