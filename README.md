@@ -120,3 +120,16 @@ BriefOS is the first module in a planned research toolkit:
 ## Output Preview
 
 ![BriefOS Output Preview](docs/briefos_preview.png)
+
+## Ecosystem
+
+BriefOS is part of a four-tool analyst workflow:
+
+| Tool | Purpose | Repo |
+|------|---------|------|
+| Trikosh | Find and profile the company | [trikosh.io](https://trikosh.io) |
+| RedFlag | Identify what is wrong with it | [github.com/zshqv/RedFlag](https://github.com/zshqv/RedFlag) |
+| **BriefOS** | **Generate the research brief** | **You are here** |
+| PitchOS | Build the M&A case | [github.com/zshqv/PitchOS](https://github.com/zshqv/PitchOS) |
+
+Each tool is independent but designed to work in sequence -- from company discovery to deal execution.
