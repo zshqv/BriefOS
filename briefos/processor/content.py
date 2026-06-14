@@ -63,7 +63,7 @@ def _fmt_div_yield(v: Optional[float]) -> str:
     if v is None:
         return "N/A"
     if v > 0.20:
-        return "N/A (data anomaly)"
+        return "N/A (not available)"
     return _fmt_pct(v)
 
 
